@@ -11,6 +11,7 @@ public class Funcionario extends Usuario {
     private boolean ehGerente;
 
     public Funcionario() {
+        super();
     }
 
     public Funcionario(String nome, String cpf, String login, String email, String senha, boolean ehGerente) {
@@ -19,15 +20,20 @@ public class Funcionario extends Usuario {
     }
 
     public static Funcionario criarFuncionario(String nome, String cpf, String login, String email, String senha, boolean ehGerente) {
-        return new Funcionario(nome, cpf, login, email, senha, ehGerente);
+        Funcionario funcionario = new Funcionario();
+        funcionario.setNome(nome);
+        funcionario.setCpf(cpf);
+        funcionario.setLogin(login);
+        funcionario.setEmail(email);
+        funcionario.setSenha(senha);
+        funcionario.setAtivo(true);
+        funcionario.setEhGerente(ehGerente);
+        return funcionario;
     }
 
     public void verFuncionario() {
+        super.verUsuario();
         System.out.println("ID: " + id);
-        System.out.println("Nome: " + getNome());
-        System.out.println("CPF: " + getCpf());
-        System.out.println("Login: " + getLogin());
-        System.out.println("Email: " + getEmail());
         System.out.println("Gerente: " + (ehGerente ? "Sim" : "Nao"));
         System.out.println("Ativo: " + (isAtivo() ? "Sim" : "Nao"));
     }
@@ -51,8 +57,19 @@ public class Funcionario extends Usuario {
         return funcionariosAtivos;
     }
 
-    public int getId() { return id; }
-    public void setId(int id) { this.id = id; }
-    public boolean isEhGerente() { return ehGerente; }
-    public void setEhGerente(boolean ehGerente) { this.ehGerente = ehGerente; }
+    public int getId() {
+        return id;
+    }
+
+    public void setId(int id) {
+        this.id = id;
+    }
+
+    public boolean isEhGerente() {
+        return ehGerente;
+    }
+
+    public void setEhGerente(boolean ehGerente) {
+        this.ehGerente = ehGerente;
+    }
 }
