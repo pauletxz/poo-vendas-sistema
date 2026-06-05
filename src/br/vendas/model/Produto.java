@@ -28,7 +28,14 @@ public class Produto implements Serializable {
     }
 
     public static Produto criarProduto(int id, String nome, String descricao, String categoria, int quantidadeEstoque, double preco) {
-        return new Produto(id, nome, descricao, categoria, quantidadeEstoque, preco);
+        Produto produto = new Produto();
+        produto.setId(id);
+        produto.setNome(nome);
+        produto.setDescricao(descricao);
+        produto.setCategoria(categoria);
+        produto.setQuantidadeEstoque(quantidadeEstoque);
+        produto.setPreco(preco);
+        return produto;
     }
 
     public void verProduto() {
