@@ -39,11 +39,11 @@ public class Funcionario extends Usuario {
     }
 
     public void editarFuncionario(String nome, String cpf, String login, String email, String senha, boolean ehGerente) {
-        setNome(nome);
-        setCpf(cpf);
-        setLogin(login);
-        setEmail(email);
-        setSenha(senha);
+        super.setNome(nome);
+        super.setCpf(cpf);
+        super.setLogin(login);
+        super.setEmail(email);
+        super.setSenha(senha);
         this.ehGerente = ehGerente;
     }
 

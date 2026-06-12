@@ -47,7 +47,12 @@ public class Cliente extends Usuario {
         }
     }
 
-    public void editarCliente(String endereco, String telefone) {
+    public void editarCliente(String nome,String cpf, String login, String senha, String endereco, String telefone) {
+        super.setNome(nome);
+        super.setCpf(cpf);
+        super.setLogin(login);
+        super.setSenha(senha);
+
         this.endereco = endereco;
         this.telefone = telefone;
     }
