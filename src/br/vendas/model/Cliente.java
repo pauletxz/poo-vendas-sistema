@@ -70,14 +70,14 @@ public class Cliente extends Usuario {
     public static List<Cliente> listarClientesSuspensos(List<Cliente> clientes) {
         List<Cliente> clientesSuspensos = new ArrayList<>();
         for (Cliente cliente : clientes) {
-            if (cliente.verificarSuspensao()) {
+            if (cliente.verificaSuspensao()) {
                 clientesSuspensos.add(cliente);
             }
         }
         return clientesSuspensos;
     }
 
-    public boolean verificarSuspensao() {
+    public boolean verificaSuspensao() {
         if (suspenso && LocalDate.now().isAfter(dataFimSuspensao)) {
             removerSuspensao();
         }
