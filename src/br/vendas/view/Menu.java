@@ -3,8 +3,10 @@ package br.vendas.view;
 import br.vendas.model.Cliente;
 import br.vendas.model.Funcionario;
 import br.vendas.model.Produto;
+import br.vendas.model.Venda;
 import br.vendas.util.Persistencia;
 
+import java.time.LocalDate;
 import java.util.InputMismatchException;
 import java.util.List;
 import java.util.Scanner;
@@ -15,6 +17,11 @@ public class Menu {
     private static List<Cliente> clientes = Persistencia.carregar("clientes.dat");
     private static List<Produto> produtos = Persistencia.carregar("produtos.dat");
     private static List<Funcionario> funcionarios = Persistencia.carregar("funcionarios.dat");
+    private static List<Venda> vendas = Persistencia.carregar("vendas.dat");
+    private static int proximoIdCliente = 1;
+    private static int proximoIdProduto = 1;
+    private static int proximoIdFuncionario = 1;
+    private static int proximoIdVenda = 1;
 
     public static void main(String[] args) {
         garantirGerentePadrao();
@@ -31,66 +38,55 @@ public class Menu {
             int opcao = lerInteiro();
 
             switch (opcao) {
-                case 0:
+                case 0 -> {
                     System.out.println("Encerrando o sistema.");
                     return;
-
-                case 1:
-                    Funcionario funcionario = loginFuncionario();
-                    if (funcionario != null) {
-                        menuFuncionario(funcionario);
+                }
+                case 1 -> {
+                    Funcionario f = loginFuncionario();
+                    if (f != null) {
+                        menuFuncionario(f);
                     }
-                    break;
-
-                case 2:
-                    Cliente cliente = loginCliente();
-                    if (cliente != null) {
-                        menuCliente(cliente);
+                }
+                case 2 -> {
+                    Cliente c = loginCliente();
+                    if (c != null) {
+                        menuCliente(c);
                     }
-                    break;
-
-                case 3:
+                }
+                case 3 -> {
                     cadastrarCliente();
                     pausar();
-                    break;
-
-                default:
-                    opcaoInvalida();
-                    break;
+                }
+                default -> {
+                    System.out.println("Opcao inexistente.");
+                    pausar();
+                }
             }
         }
     }
 
     private static void garantirGerentePadrao() {
         if (funcionarios.isEmpty()) {
-            Funcionario admin = Funcionario.criarFuncionario(
-                    "Administrador",
-                    "0000000",
-                    "admin",
-                    "admin@sistema.com",
-                    "admin",
-                    true
-            );
-
-            admin.setId(gerarProximoIdFuncionario());
+            Funcionario admin = Funcionario.criarFuncionario("Administrador", "00000000000", "admin", "admin@sistema.com", "admin", true);
+            admin.setId(proximoIdFuncionario);
+            proximoIdFuncionario++;
             funcionarios.add(admin);
-            salvarFuncionarios();
+            Persistencia.salvar(funcionarios, "funcionarios.dat");
         }
     }
 
     private static Funcionario loginFuncionario() {
         limparTela();
         System.out.println("===== LOGIN FUNCIONARIO =====");
-
         String login = lerTextoObrigatorio("Login: ");
         String senha = lerTextoObrigatorio("Senha: ");
 
-        for (Funcionario funcionario : funcionarios) {
-            if (funcionario.autenticar(login, senha)) {
-                return funcionario;
+        for (Funcionario f : funcionarios) {
+            if (f.autenticar(login, senha)) {
+                return f;
             }
         }
-
         System.out.println("Login ou senha invalidos.");
         pausar();
         return null;
@@ -99,16 +95,14 @@ public class Menu {
     private static Cliente loginCliente() {
         limparTela();
         System.out.println("===== LOGIN CLIENTE =====");
-
         String login = lerTextoObrigatorio("Login: ");
         String senha = lerTextoObrigatorio("Senha: ");
 
-        for (Cliente cliente : clientes) {
-            if (cliente.autenticar(login, senha)) {
-                return cliente;
+        for (Cliente c : clientes) {
+            if (c.autenticar(login, senha)) {
+                return c;
             }
         }
-
         System.out.println("Login ou senha invalidos.");
         pausar();
         return null;
@@ -116,60 +110,34 @@ public class Menu {
 
     private static void menuFuncionario(Funcionario funcionario) {
         int opcao = -1;
-
         while (opcao != 0) {
             limparTela();
             System.out.println("===== MENU FUNCIONARIO =====");
             System.out.println("Bem-vindo, " + funcionario.getNome());
             System.out.println("1 - Clientes");
-
+            System.out.println("2 - Vendas");
             if (funcionario.isEhGerente()) {
-                System.out.println("2 - Produtos");
-                System.out.println("3 - Funcionarios");
+                System.out.println("3 - Produtos");
+                System.out.println("4 - Funcionarios");
             }
-
             System.out.println("0 - Sair (logout)");
             System.out.print("Escolha uma opcao: ");
 
             opcao = lerInteiro();
 
             switch (opcao) {
-                case 1:
-                    submenuClientes();
-                    break;
-
-                case 2:
-                    if (funcionario.isEhGerente()) {
-                        submenuProdutos();
-                    } else {
-                        acessoNegado();
-                        pausar();
-                    }
-                    break;
-
-                case 3:
-                    if (funcionario.isEhGerente()) {
-                        submenuFuncionarios();
-                    } else {
-                        acessoNegado();
-                        pausar();
-                    }
-                    break;
-
-                case 0:
-                    System.out.println("Logout realizado.");
-                    break;
-
-                default:
-                    opcaoInvalida();
-                    break;
+                case 1: submenuClientes(); break;
+                case 2: submenuVendas(funcionario); break;
+                case 3: if (funcionario.isEhGerente()) { submenuProdutos(); } else { acessoNegado(); pausar(); } break;
+                case 4: if (funcionario.isEhGerente()) { submenuFuncionarios(); } else { acessoNegado(); pausar(); } break;
+                case 0: System.out.println("Logout realizado."); break;
+                default: System.out.println("Opcao inexistente."); pausar();
             }
         }
     }
 
     private static void submenuClientes() {
         int opcao = -1;
-
         while (opcao != 0) {
             limparTela();
             System.out.println("===== CLIENTES =====");
@@ -184,44 +152,19 @@ public class Menu {
             opcao = lerInteiro();
 
             switch (opcao) {
-                case 1:
-                    cadastrarCliente();
-                    pausar();
-                    break;
-
-                case 2:
-                    listarClientes();
-                    pausar();
-                    break;
-
-                case 3:
-                    editarClientePorFuncionario();
-                    pausar();
-                    break;
-
-                case 4:
-                    desativarCliente();
-                    pausar();
-                    break;
-
-                case 5:
-                    listarClientesSuspensos();
-                    pausar();
-                    break;
-
-                case 0:
-                    break;
-
-                default:
-                    opcaoInvalida();
-                    break;
+                case 1: cadastrarCliente(); pausar(); break;
+                case 2: listarClientes(); pausar(); break;
+                case 3: editarCliente(); pausar(); break;
+                case 4: desativarCliente(); pausar(); break;
+                case 5: listarClientesSuspensos(); pausar(); break;
+                case 0: break;
+                default: System.out.println("Opcao inexistente."); pausar();
             }
         }
     }
 
     private static void submenuProdutos() {
         int opcao = -1;
-
         while (opcao != 0) {
             limparTela();
             System.out.println("===== PRODUTOS =====");
@@ -237,49 +180,20 @@ public class Menu {
             opcao = lerInteiro();
 
             switch (opcao) {
-                case 1:
-                    cadastrarProduto();
-                    pausar();
-                    break;
-
-                case 2:
-                    listarProdutos();
-                    pausar();
-                    break;
-
-                case 3:
-                    editarProduto();
-                    pausar();
-                    break;
-
-                case 4:
-                    gerenciarEstoque();
-                    pausar();
-                    break;
-
-                case 5:
-                    excluirProduto();
-                    pausar();
-                    break;
-
-                case 6:
-                    listarProdutosSemEstoque();
-                    pausar();
-                    break;
-
-                case 0:
-                    break;
-
-                default:
-                    opcaoInvalida();
-                    break;
+                case 1: cadastrarProduto(); pausar(); break;
+                case 2: listarProdutos(); pausar(); break;
+                case 3: editarProduto(); pausar(); break;
+                case 4: gerenciarEstoque(); pausar(); break;
+                case 5: excluirProduto(); pausar(); break;
+                case 6: listarProdutosSemEstoque(); pausar(); break;
+                case 0: break;
+                default: System.out.println("Opcao inexistente."); pausar();
             }
         }
     }
 
     private static void submenuFuncionarios() {
         int opcao = -1;
-
         while (opcao != 0) {
             limparTela();
             System.out.println("===== FUNCIONARIOS =====");
@@ -291,69 +205,74 @@ public class Menu {
             opcao = lerInteiro();
 
             switch (opcao) {
-                case 1:
-                    cadastrarFuncionario();
-                    pausar();
-                    break;
+                case 1: cadastrarFuncionario(); pausar(); break;
+                case 2: listarFuncionarios(); pausar(); break;
+                case 0: break;
+                default: System.out.println("Opcao inexistente."); pausar();
+            }
+        }
+    }
 
-                case 2:
-                    listarFuncionarios();
-                    pausar();
-                    break;
+    private static void submenuVendas(Funcionario funcionario) {
+        int opcao = -1;
+        while (opcao != 0) {
+            limparTela();
+            System.out.println("===== VENDAS =====");
+            System.out.println("1 - Registrar venda");
+            System.out.println("2 - Listar vendas");
+            System.out.println("3 - Registrar pagamento");
+            System.out.println("4 - Registrar devolucao");
+            System.out.println("0 - Voltar");
+            System.out.print("Escolha uma opcao: ");
 
-                case 0:
-                    break;
+            opcao = lerInteiro();
 
-                default:
-                    opcaoInvalida();
-                    break;
+            switch (opcao) {
+                case 1: registrarVenda(funcionario); pausar(); break;
+                case 2: listarVendas(); pausar(); break;
+                case 3: registrarPagamentoVenda(); pausar(); break;
+                case 4: registrarDevolucaoVenda(); pausar(); break;
+                case 0: break;
+                default: System.out.println("Opcao inexistente."); pausar();
             }
         }
     }
 
     private static void menuCliente(Cliente cliente) {
         int opcao = -1;
-
         while (opcao != 0) {
             limparTela();
             System.out.println("===== MENU CLIENTE =====");
             System.out.println("Bem-vindo, " + cliente.getNome());
             System.out.println("1 - Ver catalogo de produtos");
             System.out.println("2 - Ver meus dados");
-            System.out.println("3 - Editar meus dados");
+            System.out.println("3 - Ver minhas compras");
             System.out.println("0 - Sair (logout)");
             System.out.print("Escolha uma opcao: ");
 
             opcao = lerInteiro();
 
             switch (opcao) {
-                case 1:
-                    listarProdutos();
-                    pausar();
-                    break;
-
-                case 2:
-                    limparTela();
-                    System.out.println("===== MEUS DADOS =====");
-                    System.out.println("ID: " + cliente.getId());
-                    cliente.verCliente();
-                    pausar();
-                    break;
-
-                case 3:
-                    limparTela();
-                    editarClienteLogado(cliente);
-                    pausar();
-                    break;
-
-                case 0:
-                    System.out.println("Logout realizado.");
-                    break;
-
-                default:
-                    opcaoInvalida();
-                    break;
+                case 1: listarProdutos(); pausar(); break;
+                case 2: limparTela(); cliente.verCliente(); pausar(); break;
+                case 3: listarComprasDoCliente(cliente); pausar(); break;
+                case 0: System.out.println("Logout realizado."); break;
+                default: System.out.println("Opcao inexistente."); pausar();
             }
+        }
+    }
+
+    private static void listarComprasDoCliente(Cliente cliente) {
+        limparTela();
+        System.out.println("===== MINHAS COMPRAS =====");
+        List<Venda> minhas = Venda.listarVendasPorCliente(vendas, cliente.getId());
+        if (minhas.isEmpty()) {
+            System.out.println("Nenhuma compra registrada.");
+            return;
+        }
+        for (Venda venda : minhas) {
+            venda.verVenda();
+            System.out.println("--------------------");
         }
     }
 
@@ -361,64 +280,24 @@ public class Menu {
         System.out.println("Acesso negado. Apenas gerentes podem realizar esta acao.");
     }
 
-    private static String lerCpf(String rotulo) {
-        while (true) {
-            System.out.print(rotulo);
-            String valor = scanner.nextLine().trim();
-
-            if (valor.matches("\\d{11}")) {
-                return valor;
-            }
-
-            System.out.println("CPF invalido. Digite exatamente 11 numeros (apenas digitos).");
-        }
-    }
-
-    private static String lerEmail(String rotulo) {
-        while (true) {
-            System.out.print(rotulo);
-            String valor = scanner.nextLine().trim();
-
-            if (!valor.isEmpty() && valor.contains("@")) {
-                return valor;
-            }
-
-            System.out.println("Email invalido. O email deve conter '@'.");
-        }
-    }
-
-    private static String lerTelefone(String rotulo) {
-        while (true) {
-            System.out.print(rotulo);
-            String valor = scanner.nextLine().trim();
-
-            if (valor.matches("\\d{11}")) {
-                return valor;
-            }
-
-            System.out.println("Telefone invalido. Digite exatamente 11 numeros (apenas digitos, sem espacos ou tracos).");
-        }
-    }
-
     private static void cadastrarCliente() {
         limparTela();
         System.out.println("===== CADASTRAR CLIENTE =====");
-
-        String nome     = lerTextoObrigatorio("Nome: ");
-        String cpf      = lerCpf("CPF (11 digitos): ");
-        String login    = lerLoginUnicoCliente(null);
-        String email    = lerEmail("Email: ");
-        String senha    = lerTextoObrigatorio("Senha: ");
+        String nome = lerTextoObrigatorio("Nome: ");
+        String cpf = lerTextoObrigatorio("CPF: ");
+        String login = lerTextoObrigatorio("Login: ");
+        String email = lerTextoObrigatorio("Email: ");
+        String senha = lerTextoObrigatorio("Senha: ");
         String endereco = lerTextoObrigatorio("Endereco: ");
-        String telefone = lerTelefone("Telefone (11 digitos): ");
+        String telefone = lerTextoObrigatorio("Telefone: ");
 
         Cliente cliente = Cliente.criarCliente(nome, cpf, login, email, senha);
-        cliente.setId(gerarProximoIdCliente());
+        cliente.setId(proximoIdCliente);
         cliente.setEndereco(endereco);
         cliente.setTelefone(telefone);
-
+        proximoIdCliente++;
         clientes.add(cliente);
-        salvarClientes();
+        Persistencia.salvar(clientes, "clientes.dat");
 
         System.out.println("\nCliente cadastrado com sucesso.");
     }
@@ -426,152 +305,88 @@ public class Menu {
     private static void listarClientes() {
         limparTela();
         System.out.println("===== CLIENTES =====");
-
-        List<Cliente> clientesAtivos = Cliente.listarClientes(clientes);
-
-        if (clientesAtivos.isEmpty()) {
+        if (clientes.isEmpty()) {
             System.out.println("Nenhum cliente cadastrado.");
             return;
         }
-
-        for (Cliente c : clientesAtivos) {
-            System.out.println("ID: " + c.getId());
-            c.verCliente();
+        for (Cliente cliente : clientes) {
+            cliente.verCliente();
             System.out.println("--------------------");
         }
     }
 
-    private static void editarClientePorFuncionario() {
+    private static void editarCliente() {
         limparTela();
         System.out.println("===== EDITAR CLIENTE =====");
-
-        Cliente cliente = buscarCliente();
-
+        Cliente cliente = buscarClientePorId();
         if (cliente == null) {
             System.out.println("Cliente nao encontrado.");
             return;
         }
-
-        String nome     = lerTextoObrigatorio("Novo nome: ");
-        String cpf      = lerCpf("Novo CPF (11  digitos): ");
-        String login    = lerLoginUnicoCliente(cliente);
-        String senha    = lerTextoObrigatorio("Nova senha: ");
+        String nome = lerTextoObrigatorio("Novo nome: ");
+        String cpf = lerTextoObrigatorio("Novo CPF: ");
+        String login = lerTextoObrigatorio("Novo login: ");
+        String senha = lerTextoObrigatorio("Nova senha: ");
         String endereco = lerTextoObrigatorio("Novo endereco: ");
-        String telefone = lerTelefone("Novo telefone (11 digitos): ");
-
+        String telefone = lerTextoObrigatorio("Novo telefone: ");
         cliente.editarCliente(nome, cpf, login, senha, endereco, telefone);
-        salvarClientes();
-
+        Persistencia.salvar(clientes, "clientes.dat");
         System.out.println("\nCliente atualizado com sucesso.");
-    }
-
-    private static void editarClienteLogado(Cliente cliente) {
-        System.out.println("===== EDITAR MEUS DADOS =====");
-
-        String nome     = lerTextoObrigatorio("Novo nome: ");
-        String cpf      = lerCpf("Novo CPF (11 digitos): ");
-        String login    = lerLoginUnicoCliente(cliente);
-        String senha    = lerTextoObrigatorio("Nova senha: ");
-        String endereco = lerTextoObrigatorio("Novo endereco: ");
-        String telefone = lerTelefone("Novo telefone (11 digitos): ");
-
-        cliente.editarCliente(nome, cpf, login, senha, endereco, telefone);
-        salvarClientes();
-
-        System.out.println("\nDados atualizados com sucesso.");
     }
 
     private static void desativarCliente() {
         limparTela();
         System.out.println("===== DESATIVAR CLIENTE =====");
-
-        Cliente cliente = buscarCliente();
-
+        Cliente cliente = buscarClientePorId();
         if (cliente == null) {
             System.out.println("Cliente nao encontrado.");
             return;
         }
-
         cliente.desativarUsuario();
-        salvarClientes();
-
+        Persistencia.salvar(clientes, "clientes.dat");
         System.out.println("\nCliente desativado com sucesso.");
     }
 
     private static void listarClientesSuspensos() {
         limparTela();
         System.out.println("===== CLIENTES SUSPENSOS =====");
-
         List<Cliente> suspensos = Cliente.listarClientesSuspensos(clientes);
-
         if (suspensos.isEmpty()) {
             System.out.println("Nenhum cliente suspenso.");
             return;
         }
-
-        for (Cliente c : suspensos) {
-            System.out.println("ID: " + c.getId());
-            c.verCliente();
+        for (Cliente cliente : suspensos) {
+            cliente.verCliente();
             System.out.println("--------------------");
         }
     }
 
-    private static Cliente buscarCliente() {
-        System.out.println("Buscar por:");
-        System.out.println("1 - ID");
-        System.out.println("2 - CPF");
-        System.out.print("Escolha: ");
-        int opcao = lerInteiro();
-
-        if (opcao == 1) {
-            System.out.print("ID do cliente: ");
-            int id = lerInteiro();
-
-            for (Cliente cliente : clientes) {
-                if (cliente.getId() == id) {
-                    return cliente;
-                }
+    private static Cliente buscarClientePorId() {
+        System.out.print("ID do cliente: ");
+        int id = lerInteiro();
+        for (Cliente cliente : clientes) {
+            if (cliente.getId() == id) {
+                return cliente;
             }
-        } else if (opcao == 2) {
-            String cpf = lerCpf("CPF do cliente (11 digitos): ");
-
-            for (Cliente cliente : clientes) {
-                if (cliente.getCpf().equals(cpf)) {
-                    return cliente;
-                }
-            }
-        } else {
-            System.out.println("Opcao invalida.");
         }
-
         return null;
     }
 
     private static void cadastrarProduto() {
         limparTela();
         System.out.println("===== CADASTRAR PRODUTO =====");
-
-        String nome      = lerTextoObrigatorio("Nome: ");
+        String nome = lerTextoObrigatorio("Nome: ");
         String descricao = lerTextoObrigatorio("Descricao: ");
         String categoria = lerTextoObrigatorio("Categoria: ");
-
         System.out.print("Quantidade em estoque: ");
         int quantidade = lerInteiro();
-
         System.out.print("Preco: ");
         double preco = lerDouble();
 
-        Produto produto = Produto.criarProduto(
-                gerarProximoIdProduto(),
-                nome,
-                descricao,
-                categoria,
-                quantidade,
-                preco
-        );
-
+        Produto produto = Produto.criarProduto(proximoIdProduto, nome, descricao, categoria, quantidade, preco);
+        proximoIdProduto++;
         produtos.add(produto);
-        salvarProdutos();
+        Persistencia.salvar(produtos, "produtos.dat");
 
         System.out.println("\nProduto cadastrado com sucesso.");
     }
@@ -579,12 +394,10 @@ public class Menu {
     private static void listarProdutos() {
         limparTela();
         System.out.println("===== PRODUTOS =====");
-
         if (produtos.isEmpty()) {
             System.out.println("Nenhum produto cadastrado.");
             return;
         }
-
         for (Produto produto : produtos) {
             produto.verProduto();
             System.out.println("--------------------");
@@ -594,95 +407,70 @@ public class Menu {
     private static void editarProduto() {
         limparTela();
         System.out.println("===== EDITAR PRODUTO =====");
-
         Produto produto = buscarProdutoPorId();
-
         if (produto == null) {
             System.out.println("Produto nao encontrado.");
             return;
         }
-
-        String nome      = lerTextoObrigatorio("Novo nome: ");
+        String nome = lerTextoObrigatorio("Novo nome: ");
         String descricao = lerTextoObrigatorio("Nova descricao: ");
         String categoria = lerTextoObrigatorio("Nova categoria: ");
-
         System.out.print("Nova quantidade: ");
         int quantidade = lerInteiro();
-
         System.out.print("Novo preco: ");
         double preco = lerDouble();
-
         produto.editarProduto(nome, descricao, categoria, quantidade, preco);
-        salvarProdutos();
-
+        Persistencia.salvar(produtos, "produtos.dat");
         System.out.println("\nProduto atualizado com sucesso.");
     }
 
     private static void gerenciarEstoque() {
         limparTela();
         System.out.println("===== GERENCIAR ESTOQUE =====");
-
         Produto produto = buscarProdutoPorId();
-
         if (produto == null) {
             System.out.println("Produto nao encontrado.");
             return;
         }
-
         System.out.println("1 - Adicionar estoque");
         System.out.println("2 - Remover estoque");
         System.out.print("Escolha: ");
-        int opcao = lerInteiro();
-
+        int op = lerInteiro();
         System.out.print("Quantidade: ");
-        int quantidade = lerInteiro();
-
-        if (quantidade <= 0) {
-            System.out.println("Quantidade invalida.");
-            return;
-        }
-
-        if (opcao == 1) {
-            produto.adicionarEstoque(quantidade);
-        } else if (opcao == 2) {
-            produto.removerEstoque(quantidade);
+        int qtd = lerInteiro();
+        if (op == 1) {
+            produto.adicionarEstoque(qtd);
+        } else if (op == 2) {
+            produto.removerEstoque(qtd);
         } else {
             System.out.println("Opcao invalida.");
             return;
         }
-
-        salvarProdutos();
+        Persistencia.salvar(produtos, "produtos.dat");
         System.out.println("\nEstoque atualizado.");
     }
 
     private static void excluirProduto() {
         limparTela();
         System.out.println("===== EXCLUIR PRODUTO =====");
-
         Produto produto = buscarProdutoPorId();
-
         if (produto == null) {
             System.out.println("Produto nao encontrado.");
             return;
         }
-
         produto.excluirProduto();
-        salvarProdutos();
-
+        Persistencia.salvar(produtos, "produtos.dat");
         System.out.println("\nProduto excluido (estoque zerado).");
     }
 
     private static void listarProdutosSemEstoque() {
         limparTela();
         System.out.println("===== PRODUTOS SEM ESTOQUE =====");
-
         List<Produto> semEstoque = Produto.listarProdutosSemEstoque(produtos);
-
         if (semEstoque.isEmpty()) {
             System.out.println("Todos os produtos tem estoque.");
             return;
         }
-
         for (Produto produto : semEstoque) {
             produto.verProduto();
             System.out.println("--------------------");
@@ -692,40 +480,31 @@ public class Menu {
     private static Produto buscarProdutoPorId() {
         System.out.print("ID do produto: ");
         int id = lerInteiro();
-
         for (Produto produto : produtos) {
             if (produto.getId() == id) {
                 return produto;
             }
         }
-
         return null;
     }
 
     private static void cadastrarFuncionario() {
         limparTela();
         System.out.println("===== CADASTRAR FUNCIONARIO =====");
-
-        String nome  = lerTextoObrigatorio("Nome: ");
-        String cpf   = lerCpf("CPF (11 digitos): ");
-        String login = lerLoginUnicoFuncionario();
-        String email = lerEmail("Email: ");
+        String nome = lerTextoObrigatorio("Nome: ");
+        String cpf = lerTextoObrigatorio("CPF: ");
+        String login = lerTextoObrigatorio("Login: ");
+        String email = lerTextoObrigatorio("Email: ");
         String senha = lerTextoObrigatorio("Senha: ");
+        System.out.print("E gerente? (1 - Sim / 2 - Nao): ");
+        int op = lerInteiro();
+        boolean ehGerente = (op == 1);
 
-        boolean ehGerente = lerOpcaoSimNao("E gerente? (1 - Sim / 2 - Nao): ");
-
-        Funcionario funcionario = Funcionario.criarFuncionario(
-                nome,
-                cpf,
-                login,
-                email,
-                senha,
-                ehGerente
-        );
-
-        funcionario.setId(gerarProximoIdFuncionario());
+        Funcionario funcionario = Funcionario.criarFuncionario(nome, cpf, login, email, senha, ehGerente);
+        funcionario.setId(proximoIdFuncionario);
+        proximoIdFuncionario++;
         funcionarios.add(funcionario);
-        salvarFuncionarios();
+        Persistencia.salvar(funcionarios, "funcionarios.dat");
 
         System.out.println("\nFuncionario cadastrado com sucesso.");
     }
@@ -733,83 +512,148 @@ public class Menu {
     private static void listarFuncionarios() {
         limparTela();
         System.out.println("===== FUNCIONARIOS =====");
-
         if (funcionarios.isEmpty()) {
             System.out.println("Nenhum funcionario cadastrado.");
             return;
         }
-
         for (Funcionario funcionario : funcionarios) {
             funcionario.verFuncionario();
             System.out.println("--------------------");
         }
     }
 
-    private static String lerLoginUnicoCliente(Cliente clienteAtual) {
-        while (true) {
-            System.out.print("Login: ");
-            String valor = scanner.nextLine().trim();
+    private static void registrarVenda(Funcionario funcionario) {
+        limparTela();
+        System.out.println("===== REGISTRAR VENDA =====");
 
-            if (valor.isEmpty()) {
-                System.out.println("Campo obrigatorio. Digite um valor.");
-                continue;
-            }
+        Cliente cliente = buscarClientePorId();
+        if (cliente == null) {
+            System.out.println("Cliente nao encontrado.");
+            return;
+        }
+        if (cliente.verificaSuspensao()) {
+            System.out.println("Cliente em suspensao. Venda nao permitida.");
+            return;
+        }
 
-            boolean duplicado = false;
-            for (Cliente c : clientes) {
-                if (c.getLogin().equals(valor) && (clienteAtual == null || c.getId() != clienteAtual.getId())) {
-                    duplicado = true;
-                    break;
+        Venda venda = Venda.criarVenda(LocalDate.now(), false);
+        venda.setId(proximoIdVenda);
+        venda.setCliente(cliente);
+        venda.setFuncionario(funcionario);
+
+        boolean adicionando = true;
+        while (adicionando) {
+            Produto produto = buscarProdutoPorId();
+            if (produto == null) {
+                System.out.println("Produto nao encontrado.");
+            } else {
+                System.out.print("Quantidade: ");
+                int qtd = lerInteiro();
+                if (qtd <= 0) {
+                    System.out.println("Quantidade invalida.");
+                } else if (qtd > produto.getQuantidadeEstoque()) {
+                    System.out.println("Quantidade maior que o estoque disponivel.");
+                } else {
+                    ItemVenda item = new ItemVenda(produto, qtd);
+                    venda.adicionarItem(item);
+                    produto.removerEstoque(qtd);
+                    System.out.println("Item adicionado.");
                 }
             }
+            System.out.print("Adicionar outro item? (1 - Sim / 2 - Nao): ");
+            int continuar = lerInteiro();
+            adicionando = (continuar == 1);
+        }
 
-            if (duplicado) {
-                System.out.println("Login ja em uso. Escolha outro.");
-                continue;
-            }
+        if (venda.getItens().isEmpty()) {
+            System.out.println("Venda sem itens. Cancelada.");
+            return;
+        }
 
-            return valor;
+        System.out.printf("Total da venda: R$%.2f%n", venda.calcularTotal());
+        System.out.print("Pagamento realizado? (1 - Sim / 2 - Nao): ");
+        int pago = lerInteiro();
+
+        if (pago == 1) {
+            venda.registrarPagamento();
+        } else {
+            venda.setFoiPago(false);
+            cliente.suspender();
+            System.out.println("Pagamento nao realizado. Cliente suspenso por 15 dias.");
+            Persistencia.salvar(clientes, "clientes.dat");
+        }
+
+        proximoIdVenda++;
+        vendas.add(venda);
+        Persistencia.salvar(vendas, "vendas.dat");
+        Persistencia.salvar(produtos, "produtos.dat");
+
+        System.out.println("\nVenda registrada com sucesso.");
+    }
+
+    private static void listarVendas() {
+        limparTela();
+        System.out.println("===== VENDAS =====");
+        if (vendas.isEmpty()) {
+            System.out.println("Nenhuma venda registrada.");
+            return;
+        }
+        for (Venda venda : vendas) {
+            venda.verVenda();
+            System.out.println("--------------------");
         }
     }
 
-    private static String lerLoginUnicoFuncionario() {
-        while (true) {
-            System.out.print("Login: ");
-            String valor = scanner.nextLine().trim();
-
-            if (valor.isEmpty()) {
-                System.out.println("Campo obrigatorio. Digite um valor.");
-                continue;
-            }
-
-            boolean duplicado = false;
-            for (Funcionario f : funcionarios) {
-                if (f.getLogin().equals(valor)) {
-                    duplicado = true;
-                    break;
-                }
-            }
-
-            if (duplicado) {
-                System.out.println("Login ja em uso. Escolha outro.");
-                continue;
-            }
-
-            return valor;
+    private static void registrarPagamentoVenda() {
+        limparTela();
+        System.out.println("===== REGISTRAR PAGAMENTO =====");
+        Venda venda = buscarVendaPorId();
+        if (venda == null) {
+            System.out.println("Venda nao encontrada.");
+            return;
         }
+        venda.registrarPagamento();
+        if (venda.getCliente() != null) {
+            venda.getCliente().removerSuspensao();
+            Persistencia.salvar(clientes, "clientes.dat");
+        }
+        Persistencia.salvar(vendas, "vendas.dat");
+        System.out.println("\nPagamento registrado.");
+    }
+
+    private static void registrarDevolucaoVenda() {
+        limparTela();
+        System.out.println("===== REGISTRAR DEVOLUCAO =====");
+        Venda venda = buscarVendaPorId();
+        if (venda == null) {
+            System.out.println("Venda nao encontrada.");
+            return;
+        }
+        venda.registrarDevolucao(venda.getId());
+        Persistencia.salvar(vendas, "vendas.dat");
+        Persistencia.salvar(produtos, "produtos.dat");
+        System.out.println("\nDevolucao registrada. Estoque atualizado.");
+    }
+
+    private static Venda buscarVendaPorId() {
+        System.out.print("ID da venda: ");
+        int id = lerInteiro();
+        for (Venda venda : vendas) {
+            if (venda.getId() == id) {
+                return venda;
+            }
+        }
+        return null;
     }
 
     private static String lerTextoObrigatorio(String rotulo) {
         String valor;
-
         while (true) {
             System.out.print(rotulo);
             valor = scanner.nextLine().trim();
-
             if (!valor.isEmpty()) {
                 return valor;
             }
-
             System.out.println("Campo obrigatorio. Digite um valor.");
         }
     }
@@ -838,76 +682,6 @@ public class Menu {
                 scanner.nextLine();
             }
         }
-    }
-
-    private static boolean lerOpcaoSimNao(String mensagem) {
-        while (true) {
-            System.out.print(mensagem);
-            int opcao = lerInteiro();
-
-            if (opcao == 1) {
-                return true;
-            }
-
-            if (opcao == 2) {
-                return false;
-            }
-
-            System.out.println("Opcao invalida. Digite 1 para Sim ou 2 para Nao.");
-        }
-    }
-
-    private static int gerarProximoIdCliente() {
-        int maiorId = 0;
-
-        for (Cliente cliente : clientes) {
-            if (cliente.getId() > maiorId) {
-                maiorId = cliente.getId();
-            }
-        }
-
-        return maiorId + 1;
-    }
-
-    private static int gerarProximoIdProduto() {
-        int maiorId = 0;
-
-        for (Produto produto : produtos) {
-            if (produto.getId() > maiorId) {
-                maiorId = produto.getId();
-            }
-        }
-
-        return maiorId + 1;
-    }
-
-    private static int gerarProximoIdFuncionario() {
-        int maiorId = 0;
-
-        for (Funcionario funcionario : funcionarios) {
-            if (funcionario.getId() > maiorId) {
-                maiorId = funcionario.getId();
-            }
-        }
-
-        return maiorId + 1;
-    }
-
-    private static void salvarClientes() {
-        Persistencia.salvar(clientes, "clientes.dat");
-    }
-
-    private static void salvarProdutos() {
-        Persistencia.salvar(produtos, "produtos.dat");
-    }
-
-    private static void salvarFuncionarios() {
-        Persistencia.salvar(funcionarios, "funcionarios.dat");
-    }
-
-    private static void opcaoInvalida() {
-        System.out.println("Opcao inexistente.");
-        pausar();
     }
 
     private static void pausar() {
