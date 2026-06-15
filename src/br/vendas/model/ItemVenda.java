@@ -45,7 +45,12 @@ public class ItemVenda implements Serializable {
         this.quantidade = quantidade;
     }
 
-    public static List<ItemVenda> listarItemVendaPorVenda(int idVenda) {
+    public static List<ItemVenda> listarItemVendaPorVenda(List<Venda> vendas, int idVenda) {
+        for (Venda venda : vendas) {
+            if (venda.getId() == idVenda) {
+                return venda.getItens();
+            }
+        }
         return new ArrayList<>();
     }
 
