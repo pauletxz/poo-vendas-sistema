@@ -192,9 +192,9 @@ Senha: admin
 
 | Nome | Matrícula |
 |---|---|
-| Gerislan da Silva Araujo | — |
-| José Veríssimo de Oliveira Queiroz | — |
-| Paulo Henrique Souza Lima | — |
+| Gerislan da Silva Araujo | 2023011795 |
+| José Veríssimo de Oliveira Queiroz | 2025022649 |
+| Paulo Henrique Souza Lima | 2022010666 |
 
 ---
 
@@ -202,7 +202,7 @@ Senha: admin
 
 **Disciplina:** PEX0130 — Programação Orientada a Objetos  
 **Instituição:** Universidade Federal Rural do Semi-Árido — Campus Pau dos Ferros
-
+**Docente:** Prof. Dr. Ítalo Augusto Souza de Assis
 ---
 
 ## 💡 Considerações finais
